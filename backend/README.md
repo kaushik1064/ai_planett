@@ -98,6 +98,19 @@ SIMILARITY_THRESHOLD=0.80
 ---
 
 For a deeper architectural explanation, see `../docs/ARCHITECTURE.md`.
+
+## Deploy to Render
+
+We include a `render.yaml` in `backend/` for one‑click deploys.
+
+Steps:
+1) Push this repository to GitHub/GitLab.
+2) In Render, create a new Web Service from your repo and point it to the `backend/` directory.
+3) Render will detect `render.yaml`. Confirm the build and start commands:
+   - Build: `pip install poetry && poetry install --no-interaction --no-ansi --no-root`
+   - Start: `poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+4) Add environment variables in the Render dashboard: `WEAVIATE_URL`, `WEAVIATE_API_KEY`, `TAVILY_API_KEY`, `MCP_TAVILY_URL`, `GEMINI_API_KEY`, etc.
+5) Deploy. Your backend will be available at `https://<service>.onrender.com`.
 # Math Agent Backend
 
 ## Setup

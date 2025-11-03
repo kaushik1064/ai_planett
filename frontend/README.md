@@ -34,4 +34,15 @@ Environment (optional):
 ---
 
 See `../docs/ARCHITECTURE.md` for the full backend + frontend architecture and operational notes.
+
+## Deploy to Vercel
+
+We include `vercel.json` with a static build config.
+
+Steps:
+1) Push this repository to GitHub/GitLab.
+2) In Vercel → New Project → Import the `frontend/` directory.
+3) Framework preset: Vite. Build command: `npm run build`. Output directory: `dist`.
+4) Set environment variable `VITE_BACKEND_BASE_URL` to your Render backend URL, e.g., `https://<service>.onrender.com`.
+5) Deploy. Open the Vercel URL and test a query.
   
