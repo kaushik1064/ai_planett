@@ -265,6 +265,19 @@ class VectorStore:
 _vector_store: VectorStore | None = None
 
 
+class _NullVectorStore:
+    """Fallback vector store used when Weaviate is unavailable at startup.
+    Provides the minimal API consumed by the workflow.
+    """
+
+    def search(self, query: str, top_k: int | None = None) -> List[Dict[str, Any]]:  # type: ignore[override]
+        return []
+
+    def add_entry(self, question: str, answer: str, source: str = "kb") -> str:  # pragma: no cover
+        logger.warning("vector_store.null.add_entry_ignored")
+        return ""
+
+
 def load_vector_store(force_reload: bool = False) -> VectorStore:
     """Lazy-load the Weaviate vector store."""
     global _vector_store
@@ -272,9 +285,9 @@ def load_vector_store(force_reload: bool = False) -> VectorStore:
         return _vector_store
 
     if not settings.weaviate_url or not settings.weaviate_api_key:
-        raise RuntimeError(
-            "Weaviate configuration missing. Set WEAVIATE_URL and WEAVIATE_API_KEY in environment."
-        )
+        logger.warning("vector_store.config.missing", msg="Starting without KB; searches will return empty.")
+        _vector_store = _NullVectorStore()  # type: ignore[assignment]
+        return _vector_store  # type: ignore[return-value]
 
     logger.info("vector_store.load.start", url=settings.weaviate_url)
 
@@ -287,16 +300,24 @@ def load_vector_store(force_reload: bool = False) -> VectorStore:
     # proper AuthCredentials object. Accessing `weaviate.Auth` at module
     # level can raise AttributeError in some installs; passing a string is
     # supported and avoids that problem.
-    client = weaviate.connect_to_weaviate_cloud(
-        cluster_url=settings.weaviate_url,
-        auth_credentials=settings.weaviate_api_key,
-    )
+    try:
+        client = weaviate.connect_to_weaviate_cloud(
+            cluster_url=settings.weaviate_url,
+            auth_credentials=settings.weaviate_api_key,
+            skip_init_checks=True,
+        )
 
-    encoder = SentenceTransformer(settings.embedding_model_name)
-    _vector_store = VectorStore(client=client, encoder=encoder)
-    
-    logger.info("vector_store.load.success")
-    return _vector_store
+        encoder = SentenceTransformer(settings.embedding_model_name)
+        _vector_store = VectorStore(client=client, encoder=encoder)
+        logger.info("vector_store.load.success")
+        return _vector_store
+    except Exception as exc:  # pragma: no cover
+        logger.warning(
+            "vector_store.load.failed_starting_without_kb",
+            error=str(exc),
+        )
+        _vector_store = _NullVectorStore()  # type: ignore[assignment]
+        return _vector_store  # type: ignore[return-value]
 
 
 def save_feedback_to_queue(feedback_record: dict) -> None:
