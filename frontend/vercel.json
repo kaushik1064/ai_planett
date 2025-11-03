@@ -13,6 +13,9 @@
     }
   },
   "routes": [
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/(.*)\.(css|js|svg|png|jpg|jpeg|gif|webp|ico|txt|map)", "dest": "/$1.$2" },
+    { "src": "/favicon.ico", "dest": "/favicon.ico" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
