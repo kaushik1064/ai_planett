@@ -39,6 +39,7 @@ Open `http://localhost:5173` and chat with your AI math professor!
 - Place all secrets (API keys, service URLs) in `backend/.env`. Supported variables:
   - `WEAVIATE_URL` (Weaviate endpoint)
   - `WEAVIATE_API_KEY`
+  - `GROQ_API_KEY`(for whisper model which help in audio input)
   - `TAVILY_API_KEY`
   - `MCP_TAVILY_URL`
   - `GEMINI_API_KEY`
