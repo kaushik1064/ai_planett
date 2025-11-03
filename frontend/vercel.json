@@ -5,11 +5,11 @@
   ],
   "outputDirectory": "build",
   "env": {
-    "VITE_BACKEND_BASE_URL": "https://YOUR_RENDER_BACKEND.onrender.com"
+    "VITE_BACKEND_BASE_URL": "https://ai-planett.onrender.com"
   },
   "build": {
     "env": {
-      "VITE_BACKEND_BASE_URL": "https://YOUR_RENDER_BACKEND.onrender.com"
+      "VITE_BACKEND_BASE_URL": "https://ai-planett.onrender.com"
     }
   },
   "routes": [
