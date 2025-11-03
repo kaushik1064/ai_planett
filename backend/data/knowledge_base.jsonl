@@ -1,0 +1,6 @@
+{"id": "gsm8k-001", "question": "Solve for x: 2x + 5 = 17.", "answer": "x = 6", "step_by_step": ["Subtract 5 from both sides: 2x = 12", "Divide both sides by 2: x = 6"]}
+{"id": "gsm8k-002", "question": "A rectangle has a length of 12 cm and width 5 cm. What is its perimeter?", "answer": "Perimeter = 34 cm", "step_by_step": ["Perimeter of rectangle = 2*(length + width)", "Compute length + width: 12 + 5 = 17", "Multiply by 2: 2*17 = 34 cm"]}
+{"id": "gsm8k-003", "question": "If 3/4 of a number is 18, what is the number?", "answer": "The number is 24", "step_by_step": ["Let the number be n", "3/4 * n = 18", "Multiply both sides by 4/3: n = 18 * 4/3", "Compute: 18 * 4 = 72", "Divide by 3: 72 / 3 = 24"]}
+{"id": "gsm8k-004", "question": "Simplify: (x^2 - 9)/(x - 3)", "answer": "x + 3", "step_by_step": ["Factor numerator: x^2 - 9 = (x - 3)(x + 3)", "Cancel common factor (x - 3)", "Result: x + 3, for x ≠ 3"]}
+{"id": "gsm8k-005", "question": "Evaluate the derivative d/dx of f(x) = 3x^3 - 4x^2 + x - 7.", "answer": "f'(x) = 9x^2 - 8x + 1", "step_by_step": ["Apply power rule to each term", "Derivative of 3x^3 is 9x^2", "Derivative of -4x^2 is -8x", "Derivative of x is 1", "Derivative of constant -7 is 0", "Combine terms: 9x^2 - 8x + 1"]}
+

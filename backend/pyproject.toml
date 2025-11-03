@@ -1,0 +1,43 @@
+ [tool.poetry]
+ name = "math-agent-backend"
+ version = "0.1.0"
+ description = "Agentic RAG math tutoring backend with guardrails, MCP search, and feedback loop"
+ authors = ["AI Assistant <assistant@example.com>"]
+ packages = [{ include = "app" }]
+
+ [tool.poetry.dependencies]
+python = "^3.13"
+fastapi = "*"
+uvicorn = { extras = ["standard"], version = "*" }
+pydantic = "*"
+pydantic-settings = "*"
+numpy = "*"
+pandas = "*"
+weaviate-client = "*"
+sentence-transformers = "*"
+scikit-learn = "*"
+httpx = "*"
+aiohttp = "*"
+python-dotenv = "*"
+google-generativeai = "*"
+groq = "*"
+# dspy-ai removed from core dependencies to avoid complex transitive
+# dependency conflicts (fastapi/litellm). If you need DSPy features,
+# add it to an optional extras group after verifying compatibility.
+# dspy-ai = { version = "^2.6.0", python = "*" }
+structlog = "*"
+tenacity = "*"
+langgraph = "*"
+
+ [tool.poetry.group.dev.dependencies]
+pytest = "*"
+pytest-asyncio = "*"
+pytest-cov = "*"
+ruff = "*"
+black = "*"
+mypy = "*"
+
+ [build-system]
+ requires = ["poetry-core>=1.0.0"]
+ build-backend = "poetry.core.masonry.api"
+

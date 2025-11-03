@@ -1,0 +1,31 @@
+%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj
+4 0 obj << /Length 893 >> stream
+BT /F1 18 Tf 72 760 Td (Math Agentic RAG Final Proposal) Tj
+/F1 12 Tf T*(Architecture: FastAPI backend + React frontend with LangGraph-orchestrated Agentic RAG.) Tj
+T*(Guardrails: Input/Output filters via AI Gateway abstraction, math-only enforcement.) Tj
+T*(Knowledge Base: GSM8K subset stored in FAISS \\(scripts/build_kb.py\\).) Tj
+T*(Web Search: MCP Tavily tool with Gemini grounding fallback.) Tj
+T*(LangGraph: Stateful workflow governs retrieval, search fallback, DSPy reasoning, moderation.) Tj
+T*(Feedback Loop: Multi-step UX storing decisions in feedback_db.json.) Tj
+T*(Human-in-the-loop: Validated solutions queued for KB updates.) Tj
+T*(DSPy: Gemini-backed chain-of-thought generator for step-by-step reasoning.) Tj
+T*(Voice & Vision: Groq Whisper audio + Gemini OCR for multimodal input.) Tj
+T*(Deployment: FastAPI services + React client \\(set GEMINI/TAVILY/GROQ keys\\).) Tj
+ET
+endstream endobj
+5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001185 00000 n 
+trailer << /Size 6 /Root 1 0 R >>
+startxref
+1255
+%%EOF
