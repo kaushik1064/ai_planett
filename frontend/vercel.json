@@ -1,22 +1,20 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "package.json", "use": "@vercel/static-build" }
-  ],
-  "outputDirectory": "build",
-  "env": {
-    "VITE_BACKEND_BASE_URL": "https://ai-planett.onrender.com"
-  },
-  "build": {
-    "env": {
-      "VITE_BACKEND_BASE_URL": "https://ai-planett.onrender.com"
-    }
-  },
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
   "routes": [
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*)\.(css|js|svg|png|jpg|jpeg|gif|webp|ico|txt|map)", "dest": "/$1.$2" },
-    { "src": "/favicon.ico", "dest": "/favicon.ico" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/(.*\\.(css|js|svg|png|jpg|jpeg|gif|webp|ico|txt|map|woff|woff2|ttf|eot))",
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }
 
