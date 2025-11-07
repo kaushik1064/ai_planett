@@ -2,6 +2,19 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "version": 2,
+  "builds": [
+    { "src": "package.json", "use": "@vercel/static-build" }
+  ],
+  "outputDirectory": "build",
+  "env": {
+    "VITE_BACKEND_BASE_URL": "https://ai-planett-c3s8.onrender.com"
+  },
+  "build": {
+    "env": {
+      "VITE_BACKEND_BASE_URL": "https://ai-planett-c3s8.onrender.com"
+    }
+  },
   "routes": [
     {
       "src": "/assets/(.*)",
