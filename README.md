@@ -136,14 +136,3 @@ frontend/
   vercel.json           # Vercel deploy config
 ```
 
-***
-
-MIT — Open source, build your own agentic tutor, contribute!
-  
-***
-
-**Get started, get answers, and help improve math learning with AI!**
-
-***
-
-Paste this README in your repo root and you’ll have an instantly impressive, clear, and complete intro for any visitor or collaborator. Let me know if you want it tailored for a specific team/company badge or API usage diagram!
