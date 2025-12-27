@@ -115,3 +115,22 @@ class ErrorResponse(BaseModel):
     context: Optional[dict[str, Any]] = None
 
 
+
+class StructuredProblem(BaseModel):
+    """Output from Parser Agent."""
+    original_text: str
+    cleaned_text: str
+    topic: str
+    subtopic: Optional[str] = None
+    problem_type: Optional[str] = None
+    variables: List[str] = Field(default_factory=list)
+    constraints: List[str] = Field(default_factory=list)
+    needs_clarification: bool = False
+    clarification_question: Optional[str] = None
+
+
+class VerificationResult(BaseModel):
+    """Output from Verifier Agent."""
+    is_correct: bool
+    critique: Optional[str] = None
+    correction_suggestion: Optional[str] = None
