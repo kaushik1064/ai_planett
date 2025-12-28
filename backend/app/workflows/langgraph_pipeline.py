@@ -220,6 +220,12 @@ def build_math_agent_graph(vector_store: VectorStore) -> StateGraph:
         if state["retry_count"] > 1: # Max 2 retries
             return "max_retries"
         return "fail"
+        
+    def route_parser(state: AgentGraphState) -> Literal["router", "end"]:
+        """Check if clarification is needed."""
+        if state["structured_problem"].needs_clarification:
+            return "end"
+        return "router"
 
     # --- Build Graph ---
     
@@ -233,9 +239,18 @@ def build_math_agent_graph(vector_store: VectorStore) -> StateGraph:
     
     # Entry
     graph.set_entry_point("parser")
-    graph.add_edge("parser", "router")
     
-    # Branching
+    # Branching from Parser (HITL)
+    graph.add_conditional_edges(
+        "parser",
+        route_parser,
+        {
+            "router": "router",
+            "end": END
+        }
+    )
+    
+    # Branching from Router
     graph.add_conditional_edges(
         "router",
         route_intent,

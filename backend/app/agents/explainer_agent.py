@@ -28,11 +28,28 @@ async def run_explainer_agent(query: str, solution: str, steps: list) -> str:
     FINAL ANSWER: "{solution}"
     
     INSTRUCTIONS:
-    1. Structure the response clearly with Markdown (## Headers, **Bold** terms).
-    2. Start with a direct answer or brief summary.
-    3. Explain the "Why" and "How" of the key steps. Don't just list numbers.
-    4. Use friendly, encouraging tone ("Great question!", "Here is how we solve it").
-    5. Use LaTeX for math expressions only if strictly necessary, but prefer readable text where possible.
+    1.  **Layout**: Use `## Header` for each step. NEVER output a giant wall of text.
+    2.  **Math**: Use LaTeX ($...$) for ALL math. Use `$$` for centered display equations.
+        -   Good: $$ \int x^2 dx $$
+        -   Bad: integral of x^2
+    3.  **Tone**: Friendly and clear.
+    4.  **No Redundancy**: Do not repeat "Step 1" if the header says "Step 1".
+    
+    ### FORMAT EXAMPLE (Follow this structure):
+    
+    ## Step 1: Analyze the Integral
+    The problem asks us to evaluate:
+    $$ \int \\frac{{\sec^2 x}}{{(\sec x + \tan x)^{{9/2}}}} dx $$
+    
+    ## Step 2: Choose Substitution
+    Let's convert the terms. We know that:
+    $$ \\frac{{d}}{{dx}}(\sec x + \tan x) = \sec x (\sec x + \tan x) $$
+    
+    ## Step 3: Solve
+    Substituting back, we get:
+    $$ -\\frac{{1}}{{7}} u^{{-7/2}} $$
+    
+    ### END EXAMPLE
     
     OUTPUT:
     A complete markdown string.

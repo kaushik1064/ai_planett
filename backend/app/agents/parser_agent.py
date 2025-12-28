@@ -26,7 +26,8 @@ async def run_parser_agent(query: str, modality: str = "text") -> StructuredProb
     1. Fix any obvious OCR/ASR errors (e.g., '1' vs 'l', '0' vs 'O', 'sqrt' vs 'squirt').
     2. Extract the core math topic (e.g., Algebra, Calculus).
     3. Identify variables and constraints.
-    4. If the input is too ambiguous or nonsensical, set "needs_clarification" to true.
+    4. CRITICAL: If MODALITY is "image", set "needs_clarification" to true to allow user verification.
+    5. If the input is too ambiguous or nonsensical, set "needs_clarification" to true.
     
     OUTPUT JSON SCHEMA:
     {{
@@ -38,7 +39,7 @@ async def run_parser_agent(query: str, modality: str = "text") -> StructuredProb
         "variables": ["x", "y"],
         "constraints": ["x > 0"],
         "needs_clarification": boolean,
-        "clarification_question": "What specifically are you asking?" (if needed)
+        "clarification_question": "Please verify: Is this the correct problem?" (if image)
     }}
     
     Return ONLY valid JSON.

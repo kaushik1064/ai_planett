@@ -4,6 +4,7 @@ import { ChatMessage } from "./components/ChatMessage";
 import { ChatInput } from "./components/ChatInput";
 import { ScrollArea } from "./components/ui/scroll-area";
 import { Message, OutgoingMessage, FeedbackPayload, AgentResponsePayload } from "./types";
+import "katex/dist/katex.min.css"; // Import styles for LaTeX math
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
@@ -43,7 +44,7 @@ export default function App() {
         return [
           ...withoutStatus,
           {
-      id: `assistant-${Date.now()}`,
+            id: `assistant-${Date.now()}`,
             role: "assistant",
             content: data.answer,
             steps: data.steps,
@@ -70,7 +71,7 @@ export default function App() {
         },
       ]);
     } finally {
-    setIsProcessing(false);
+      setIsProcessing(false);
     }
   };
 

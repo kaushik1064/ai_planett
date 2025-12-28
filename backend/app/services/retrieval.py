@@ -11,6 +11,12 @@ from .vector_store import VectorStore, load_vector_store
 logger = get_logger(__name__)
 
 
+# Simple in-memory cache for HITL (Global for single-server deployment)
+# In production, use Redis.
+PENDING_CLARIFICATIONS: dict[str, str] = {}  # Global dict to store pending texts
+
+from google.api_core.exceptions import ResourceExhausted
+
 class MathAgent:
     """High-level orchestration for handling a math query."""
 
@@ -20,14 +26,48 @@ class MathAgent:
 
     async def handle_query(self, query: str) -> AgentResponse:
         """Run the query through guardrails, routing, and generation."""
+        
+        # HITL Interception: Check if user is confirming a pending request
+        # We treat "yes", "y", "correct", "sure" as confirmations if we have a pending text.
+        # Since we don't have user_id, we use a single global slot "latest" for this demo.
+        clean_q = query.strip().lower()
+        if clean_q in ["yes", "y", "correct", "sure", "ok", "okay", "verify"] and "latest" in PENDING_CLARIFICATIONS:
+            logger.info("math_agent.hitl_confirmed", original_query=query)
+            query = PENDING_CLARIFICATIONS.pop("latest")
+            # Proceed with the REPLACED query (the actual math problem)
 
         try:
             result_state = await self.graph.ainvoke({"query": query, "gateway_trace": []})
+        except ResourceExhausted:
+            logger.warning("math_agent.quota_exceeded")
+            return AgentResponse(
+                answer=" **System Overloaded (Rate Limit)** 🚦\n\nI'm receiving too many requests right now. Please wait 15-20 seconds and try again.\n(Google Gemini API Quota Exceeded)",
+                steps=[],
+                source="system_error"
+            )
         except GuardrailViolation:
             raise
         except Exception as exc:  # pragma: no cover - defensive logging
             logger.exception("math_agent.graph_failure", error=str(exc))
             raise
+
+        # HITL Check: Did the parser request clarification?
+        structured = result_state.get("structured_problem")
+        if structured and structured.needs_clarification:
+            logger.info("math_agent.hitl_triggered", question=structured.clarification_question)
+            
+            # STORE the text so we remember it when user says "yes"
+            PENDING_CLARIFICATIONS["latest"] = structured.cleaned_text
+            
+            return AgentResponse(
+                answer=structured.clarification_question or "I need to clarify your request. Is the text correct?",
+                steps=[Step(
+                    title="Clarification Needed", 
+                    content=f"I extracted this text from your image:\n\n**{structured.cleaned_text}**\n\nIs this correct? If not, please correct it below."
+                )],
+                feedback_required=True,
+                source="parser_hitl"
+            )
 
         steps_raw = result_state.get("steps", []) or []
         
@@ -70,21 +110,27 @@ class MathAgent:
 
         # Convert steps to new format with content and optional expressions
         formatted_steps = []
-        for step in steps_raw:
-            # steps_raw is now a list of dicts with title/content/expression
-            if isinstance(step, dict):
-                formatted_steps.append(Step(
-                    title=step.get("title", ""),
-                    content=step.get("content", ""),
-                    expression=step.get("expression")
-                ))
-            else:
-                # Handle legacy tuple format for backward compatibility
-                title, explanation = step
-                formatted_steps.append(Step(
-                    title=title,
-                    content=explanation
-                ))
+        
+        # UI CLEANUP: If the answer is comprehensive (likely from Explainer with Markdown headers),
+        # we suppress the raw technical steps to avoid "double vision" / bulkiness.
+        is_comprehensive_explanation = len(answer_text) > 100 and ("##" in answer_text or "**Step" in answer_text)
+        
+        if not is_comprehensive_explanation:
+            for step in steps_raw:
+                # steps_raw is now a list of dicts with title/content/expression
+                if isinstance(step, dict):
+                    formatted_steps.append(Step(
+                        title=step.get("title", ""),
+                        content=step.get("content", ""),
+                        expression=step.get("expression")
+                    ))
+                else:
+                    # Handle legacy tuple format for backward compatibility
+                    title, explanation = step
+                    formatted_steps.append(Step(
+                        title=title,
+                        content=explanation
+                    ))
 
         response = AgentResponse(
             answer=answer_text,
@@ -102,6 +148,7 @@ class MathAgent:
             retrieved=retrieved_from_kb,
             kb_hits=len(knowledge_hits),
             trace=gateway_trace,
+            suppressed_steps=is_comprehensive_explanation
         )
 
         return response

@@ -1,125 +1,24 @@
 import React, { useState } from "react";
 import { User, Bot, ChevronDown, ChevronUp } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import { FeedbackSystem } from "./FeedbackSystem";
 import { Message, StatusType, FeedbackPayload } from "../types";
-
-// Helper function to format mathematical content with better line breaks
-function formatMathContent(text: string): React.ReactNode {
-  if (!text) return null;
-  
-  // Split by double newlines to preserve paragraphs
-  const paragraphs = text.split(/\n\n+/);
-  
-  return (
-    <>
-      {paragraphs.map((para, idx) => {
-        const trimmedPara = para.trim();
-        if (!trimmedPara) return null;
-        
-        const lines = trimmedPara.split('\n');
-        const hasMultipleLines = lines.length > 1;
-        
-        // If single paragraph with no line breaks, render as simple text
-        if (!hasMultipleLines && lines[0]) {
-          return (
-            <p key={idx} className={idx > 0 ? "mt-3" : ""}>
-              {lines[0]}
-            </p>
-          );
-        }
-        
-        // Multiple lines - format each line appropriately
-        return (
-          <div key={idx} className={idx > 0 ? "mt-3" : ""}>
-            {lines.map((line, lineIdx) => {
-              const trimmedLine = line.trim();
-              if (!trimmedLine && lineIdx < lines.length - 1) {
-                return <br key={lineIdx} />;
-              }
-              
-              // Handle bullet points or numbered lists
-              if (trimmedLine.match(/^[\-\*•]\s/) || trimmedLine.match(/^\d+[\.\)]\s/)) {
-                return (
-                  <div key={lineIdx} className="ml-4 mb-1.5 leading-relaxed">
-                    {trimmedLine}
-                  </div>
-                );
-              }
-              
-              // Regular lines
-              return (
-                <div key={lineIdx} className="mb-1.5 leading-relaxed last:mb-0">
-                  {trimmedLine}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
-    </>
-  );
-}
 
 // Extract a concise final answer from a possibly long answer string
 function extractConciseAnswer(text?: string): string {
   if (!text) return "";
   const t = text.trim();
-  // Prefer "Final Answer:" if present
   const finalMatch = t.match(/Final Answer\s*[:\-]\s*(.+)/i);
   if (finalMatch && finalMatch[1]) return finalMatch[1].trim();
-  // Or "Answer:" format
   const ansMatch = t.match(/^(?:Answer\s*[:\-]\s*)(.+)$/im);
   if (ansMatch && ansMatch[1]) return ansMatch[1].trim();
-  // Try to capture a last evaluated value like "= 10" or a concise last line
   const equalsMatch = t.match(/=\s*([^=\n]+)\s*$/m);
   if (equalsMatch && equalsMatch[1]) return equalsMatch[1].trim();
   const lastLine = t.split(/\n+/).map(s => s.trim()).filter(Boolean).pop();
   if (lastLine) return lastLine;
-  // Otherwise, search lines for a concise result-like statement
-  const lines = t.split(/\n+/).map(s => s.trim()).filter(Boolean);
-  // Try the last equation/short numeric-ish line
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i];
-    const isShort = line.length <= 80;
-    const looksLikeResult = /(=|≈|≃|→)\s*[-+]?\d+(?:[\/.]\d+)?(?:\s*[/·]\s*\d+)?\s*$/.test(line)
-      || /^[-+]?\d+(?:[\/.]\d+)?(?:\s*[/·]\s*\d+)?\s*$/.test(line)
-      || /\bunits?\b/i.test(line);
-    if (isShort && looksLikeResult) return line;
-  }
-  // Fallback: pick the last short line available
-  const lastShort = [...lines].reverse().find(l => l.length <= 80);
-  if (lastShort) return lastShort;
-  // Final fallback: trim long text
   return t.length > 120 ? t.slice(0, 120).trim() + "…" : t;
-}
-
-// Render step content as point-wise items (bulleted), avoiding bulky paragraphs
-function renderStepPoints(text: string): React.ReactNode {
-  if (!text) return null;
-  // Remove any leading Answer/Final Answer lines from steps to avoid duplication
-  const raw = text
-    .split(/\n+/)
-    .filter(l => !/^\s*(final\s+answer|answer)\s*[:\-]?/i.test(l))
-    .join("\n")
-    .trim();
-  // Primary split by existing line breaks
-  let parts = raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
-  // If it's a single bulky line, split by sentence-ish boundaries
-  if (parts.length <= 1 && raw.length > 160) {
-    parts = raw.split(/(?<=[\.\!\?])\s+(?=[A-Z0-9(])/).map(s => s.trim()).filter(Boolean);
-  }
-  // If nothing remains after filtering (e.g., input only had an Answer line),
-  // fall back to original text lines so we still show an explanation.
-  if (parts.length === 0) {
-    parts = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
-  }
-  return (
-    <ul className="list-disc ml-6 space-y-1.5">
-      {parts.map((p, i) => (
-        <li key={i} className="leading-relaxed">{p}</li>
-      ))}
-    </ul>
-  );
 }
 
 interface ChatMessageProps {
@@ -129,7 +28,7 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message, onFeedbackSubmit }: ChatMessageProps) {
   const [showSources, setShowSources] = useState(false);
-  
+
   if (message.role === "status") {
     return (
       <div className="flex justify-center py-4">
@@ -153,35 +52,70 @@ export function ChatMessage({ message, onFeedbackSubmit }: ChatMessageProps) {
 
   return (
     <div className={`flex gap-4 ${isUser ? "flex-row-reverse" : "flex-row"} mb-6`}>
-      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-        isUser ? "bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-lg" : "bg-gradient-to-br from-yellow-400 to-yellow-500 shadow-lg"
-      }`}>
+      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${isUser ? "bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-lg" : "bg-gradient-to-br from-yellow-400 to-yellow-500 shadow-lg"
+        }`}>
         {isUser ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
       </div>
-      
+
       <div className={`flex-1 ${isUser ? "flex justify-end" : ""}`}>
-        <div className={`inline-block max-w-[80%] ${
-          isUser 
-            ? "bg-white/[0.04] backdrop-blur-[100px]" 
-            : "bg-white/[0.06] backdrop-blur-[100px]"
-        } rounded-2xl px-5 py-3 shadow-[0_4px_28px_0_rgba(0,0,0,0.3),inset_0_0_40px_0_rgba(255,255,255,0.02)]`}>
+        <div className={`inline-block ${isUser
+          ? "max-w-[80%] bg-white/[0.04] backdrop-blur-[100px]"
+          : "w-full bg-white/[0.06] backdrop-blur-[100px]"
+          } rounded-2xl px-5 py-3 shadow-[0_4px_28px_0_rgba(0,0,0,0.3),inset_0_0_40px_0_rgba(255,255,255,0.02)]`}>
           {message.imagePreview && (
-            <img 
-              src={message.imagePreview} 
-              alt="User upload" 
+            <img
+              src={message.imagePreview}
+              alt="User upload"
               className="rounded-lg mb-3 max-w-full h-auto shadow-lg"
             />
           )}
-          
-          {/* Render explanation once: prefer steps; else show content even if Answer exists */}
-          {!(message.steps && message.steps.length > 0) && (
-            <div className="text-white/95">
-              {renderStepPoints(message.content || "")}
-            </div>
-          )}
-          
+
+          {/* Main Content Rendered as Markdown + Math */}
+          <div className={`prose prose-invert prose-p:leading-relaxed prose-pre:bg-black/50 prose-pre:p-0 max-w-none text-white/95 ${isUser ? "text-right" : "text-left"}`}>
+            <ReactMarkdown
+              remarkPlugins={[remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+              components={{
+                // Custom link style
+                a: ({ node, ...props }) => <a {...props} className="text-yellow-300 hover:text-yellow-200 underline" target="_blank" rel="noopener" />,
+                // Custom paragraphs with generous spacing and relaxed line height
+                p: ({ node, ...props }) => <p className="mb-4 last:mb-0 leading-loose" {...props} />,
+                // Custom headers for clear separation
+                h1: ({ node, ...props }) => <h1 className="mt-8 mb-4 text-2xl font-bold text-yellow-500" {...props} />,
+                h2: ({ node, ...props }) => <h2 className="mt-8 mb-4 text-xl font-bold text-yellow-400 border-b border-yellow-500/20 pb-2" {...props} />,
+                h3: ({ node, ...props }) => <h3 className="mt-6 mb-3 text-lg font-semibold text-yellow-300" {...props} />,
+                h4: ({ node, ...props }) => <h4 className="mt-6 mb-3 text-base font-semibold text-yellow-200" {...props} />,
+                // Lists
+                ul: ({ node, ...props }) => <ul className="my-4 pl-6 list-disc space-y-2" {...props} />,
+                ol: ({ node, ...props }) => <ol className="my-4 pl-6 list-decimal space-y-2" {...props} />,
+                li: ({ node, ...props }) => <li className="mb-1 leading-relaxed" {...props} />,
+                // Blockquotes
+                blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-yellow-500/50 pl-4 py-1 my-4 italic text-white/70" {...props} />,
+                // Custom code block
+                code: ({ node, className, children, ...props }) => {
+                  const match = /language-(\w+)/.exec(className || '')
+                  return match ? (
+                    <div className="rounded-md bg-black/40 p-4 my-6 border border-white/10 overflow-x-auto shadow-inner">
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    </div>
+                  ) : (
+                    <code className="bg-white/10 rounded px-1.5 py-0.5 text-yellow-100 font-mono text-sm mx-1" {...props}>
+                      {children}
+                    </code>
+                  )
+                }
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
+          </div>
+
+          {/* Steps (If any, usually hidden by backend now, but good to support) */}
           {message.steps && message.steps.length > 0 && (
-            <div className="mt-4 space-y-4">
+            <div className="mt-6 space-y-6 border-t border-white/10 pt-4">
+              <div className="text-xs uppercase tracking-wide text-white/50 mb-2">Detailed Steps</div>
               {message.steps.map((step, index) => (
                 <div key={index} className="flex gap-3">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-500/40 backdrop-blur-sm shadow-md flex items-center justify-center">
@@ -191,35 +125,32 @@ export function ChatMessage({ message, onFeedbackSubmit }: ChatMessageProps) {
                     {step.title && (
                       <h4 className="font-semibold text-white/95 mb-2 text-base">{step.title}</h4>
                     )}
-                    <div className="text-white/90 leading-relaxed break-words">
-                      {renderStepPoints(step.content || step.explanation || "")}
+                    <div className="prose prose-invert prose-sm max-w-none text-white/90">
+                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                        {step.content || step.explanation || ""}
+                      </ReactMarkdown>
                     </div>
-                    {step.expression && (
-                      <div className="mt-3 p-3 rounded-lg bg-white/[0.08] border border-white/10 overflow-x-auto">
-                        <code className="text-yellow-300/90 text-sm font-mono break-all whitespace-pre-wrap block">
-                          {step.expression}
-                        </code>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Final Answer shown once, highlighted */}
+          {/* Final Answer Highlight */}
           {message.agentResponse && message.agentResponse.answer && (
-            <div className="mt-5 rounded-xl border border-yellow-400/40 bg-gradient-to-br from-yellow-500/10 to-transparent p-3">
-              <div className="text-yellow-300 font-semibold mb-1 uppercase text-xs tracking-wide">Answer</div>
-              <div className="text-white font-semibold text-lg">
-                {extractConciseAnswer(message.agentResponse.answer)}
+            <div className="mt-5 rounded-xl border border-yellow-400/40 bg-gradient-to-br from-yellow-500/10 to-transparent p-4 shadow-lg">
+              <div className="text-yellow-300 font-semibold mb-2 uppercase text-xs tracking-wide">Final Result</div>
+              <div className="text-white text-lg prose prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                  {extractConciseAnswer(message.agentResponse.answer)}
+                </ReactMarkdown>
               </div>
             </div>
           )}
 
-          {/* Collapsible Sources Section - Always show if there are KB results or citations */}
-          {(message.knowledgeHits && message.knowledgeHits.length > 0) || 
-           (message.citations && message.citations.length > 0) ? (
+          {/* Collapsible Sources Section */}
+          {(message.knowledgeHits && message.knowledgeHits.length > 0) ||
+            (message.citations && message.citations.length > 0) ? (
             <div className="mt-4 border-t border-white/10 pt-3">
               <button
                 onClick={() => setShowSources(!showSources)}
@@ -228,7 +159,7 @@ export function ChatMessage({ message, onFeedbackSubmit }: ChatMessageProps) {
                 {showSources ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 Sources & Context {showSources ? "(Hide)" : "(Show)"}
               </button>
-              
+
               {showSources && (
                 <div className="mt-3 space-y-4">
                   {message.knowledgeHits && message.knowledgeHits.length > 0 && (
@@ -243,7 +174,6 @@ export function ChatMessage({ message, onFeedbackSubmit }: ChatMessageProps) {
                       ))}
                     </div>
                   )}
-                  
                   {message.citations && message.citations.length > 0 && (
                     <div className="space-y-2">
                       <p className="text-xs uppercase tracking-wide text-white/50">Citations</p>
@@ -258,13 +188,11 @@ export function ChatMessage({ message, onFeedbackSubmit }: ChatMessageProps) {
                       </ul>
                     </div>
                   )}
-
                   {message.source && message.source !== "kb" && (
                     <div className="text-xs text-white/60">
                       <span className="uppercase tracking-wide">Source:</span> {message.source}
                     </div>
                   )}
-
                   {message.trace && message.trace.length > 0 && (
                     <div className="text-[11px] text-white/40">
                       Gateway Trace: {message.trace.join(" → ")}
@@ -274,10 +202,10 @@ export function ChatMessage({ message, onFeedbackSubmit }: ChatMessageProps) {
               )}
             </div>
           ) : null}
-          
+
           {message.showFeedback && !isUser && onFeedbackSubmit && message.agentResponse && (
             <div className="mt-4 pt-4 border-t border-white/10">
-              <FeedbackSystem 
+              <FeedbackSystem
                 messageId={message.id}
                 onSubmit={onFeedbackSubmit}
               />
