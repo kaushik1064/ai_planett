@@ -51,7 +51,12 @@ def create_app() -> FastAPI:
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # Startup
         logger.info("app.startup")
-        create_db_and_tables()  # Initialize Supabase tables
+        try:
+            create_db_and_tables()  # Initialize Supabase tables
+        except Exception as e:
+            logger.error(f"DB Connection Failed: {e}")
+            logger.warning("Starting app WITHOUT database persistence.")
+        
         app.state.vector_store = await asyncio.to_thread(load_vector_store)
         
         yield  # Server is running
