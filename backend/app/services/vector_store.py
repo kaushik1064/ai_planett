@@ -301,10 +301,14 @@ def load_vector_store(force_reload: bool = False) -> VectorStore:
     # level can raise AttributeError in some installs; passing a string is
     # supported and avoids that problem.
     try:
+        # Set strict timeouts to fail fast if Weaviate is unreachable
         client = weaviate.connect_to_weaviate_cloud(
             cluster_url=settings.weaviate_url,
             auth_credentials=settings.weaviate_api_key,
             skip_init_checks=True,
+            additional_config=weaviate.classes.init.AdditionalConfig(
+                timeout=weaviate.classes.init.Timeout(init=3, query=3, insert=5)
+            )
         )
 
         encoder = SentenceTransformer(settings.embedding_model_name)
