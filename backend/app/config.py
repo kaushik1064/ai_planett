@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     mcp_tavily_url: str | None = None  # e.g., https://mcp.tavily.com/mcp/?tavilyApiKey=tvly-...
     gemini_api_key: str | None = None
     groq_api_key: str | None = None
+    database_url: str | None = None  # Supabase Connection String
 
     # Model configuration
     gemini_model: str = "gemini-2.5-flash"  # Fast model for search grounding and vision

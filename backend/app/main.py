@@ -25,6 +25,8 @@ from .services.kb_updater import update_knowledge_base
 from .tools.audio import transcribe_audio
 from .tools.validator import validate_user_solution
 from .tools.vision import extract_text_from_image
+from .db import create_db_and_tables
+from .routers import history
 
 logger = get_logger(__name__)
 
@@ -43,10 +45,13 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    app.include_router(history.router)  # Register History API
+
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # Startup
         logger.info("app.startup")
+        create_db_and_tables()  # Initialize Supabase tables
         app.state.vector_store = await asyncio.to_thread(load_vector_store)
         
         yield  # Server is running

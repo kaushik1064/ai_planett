@@ -8,7 +8,7 @@ const GenerativeArtScene = memo(() => {
   useEffect(() => {
     const currentMount = mountRef.current;
     if (!currentMount || hasInitialized.current) return;
-    
+
     hasInitialized.current = true;
 
     const scene = new THREE.Scene();
@@ -148,7 +148,7 @@ const GenerativeArtScene = memo(() => {
     const animate = (t: number) => {
       const time = t * 0.001;
       material.uniforms.time.value = time;
-      
+
       // Rotate blob slowly
       blob.rotation.y = time * 0.1;
       blob.rotation.x = Math.sin(time * 0.05) * 0.2;
@@ -170,12 +170,12 @@ const GenerativeArtScene = memo(() => {
       hasInitialized.current = false;
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", handleResize);
-      
+
       // Properly dispose of Three.js resources
       geometry.dispose();
       material.dispose();
       renderer.dispose();
-      
+
       if (currentMount && renderer.domElement.parentElement === currentMount) {
         currentMount.removeChild(renderer.domElement);
       }
@@ -189,7 +189,7 @@ GenerativeArtScene.displayName = 'GenerativeArtScene';
 
 export function AnomalousMatterHero() {
   return (
-    <section className="fixed inset-0 w-full h-full bg-black overflow-hidden">
+    <section className="fixed inset-0 w-full h-full bg-black overflow-hidden pointer-events-none">
       <GenerativeArtScene />
     </section>
   );

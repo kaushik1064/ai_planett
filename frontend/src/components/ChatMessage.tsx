@@ -7,18 +7,45 @@ import { FeedbackSystem } from "./FeedbackSystem";
 import { Message, StatusType, FeedbackPayload } from "../types";
 
 // Extract a concise final answer from a possibly long answer string
+// Extract a concise final answer from a possibly long answer string
+// Extract a concise final answer from a possibly long answer string
 function extractConciseAnswer(text?: string): string {
   if (!text) return "";
   const t = text.trim();
-  const finalMatch = t.match(/Final Answer\s*[:\-]\s*(.+)/i);
-  if (finalMatch && finalMatch[1]) return finalMatch[1].trim();
-  const ansMatch = t.match(/^(?:Answer\s*[:\-]\s*)(.+)$/im);
-  if (ansMatch && ansMatch[1]) return ansMatch[1].trim();
-  const equalsMatch = t.match(/=\s*([^=\n]+)\s*$/m);
-  if (equalsMatch && equalsMatch[1]) return equalsMatch[1].trim();
-  const lastLine = t.split(/\n+/).map(s => s.trim()).filter(Boolean).pop();
-  if (lastLine) return lastLine;
-  return t.length > 120 ? t.slice(0, 120).trim() + "…" : t;
+
+  // 1. Explicit text markers (Robust to newlines and "So, the final answer is:")
+  // Matches "Final Answer: ...", "The final answer is ...", etc.
+  const explicitMatch = t.match(/(?:The\s+)?Final\s+Answer\s*(?:is)?\s*[:\-]\s*([\s\S]+)/i);
+  if (explicitMatch && explicitMatch[1]) {
+    let candidate = explicitMatch[1].trim();
+    // Use only the first paragraph/line if it's too long
+    const firstBlock = candidate.split(/\n\n/)[0].trim();
+    // If the candidate contains LaTeX, return it nicely
+    if (firstBlock.includes("$") || firstBlock.includes("\\")) {
+      return firstBlock;
+    }
+    return firstBlock;
+  }
+
+  // 2. Look for \boxed{...} - highly specific to math answers
+  const boxedMatch = t.match(/\\boxed{([\s\S]+?)}/);
+  if (boxedMatch && boxedMatch[1]) {
+    return `$$ ${boxedMatch[1]} $$`; // Wrap in display math
+  }
+
+  // 3. Look for the very last "math" block (single $ or double $$)
+  // This captures the last equation in the text, which is usually the result.
+  const latexMatches = [...t.matchAll(/(\$\$[\s\S]+?\$\$|\$[^\n]+?\$)/g)];
+  if (latexMatches.length > 0) {
+    return latexMatches[latexMatches.length - 1][0];
+  }
+
+  // 4. Fallback: Last line, if it looks significant
+  const lines = t.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const lastLine = lines.pop();
+  if (lastLine && lastLine.length > 3) return lastLine;
+
+  return "";
 }
 
 interface ChatMessageProps {

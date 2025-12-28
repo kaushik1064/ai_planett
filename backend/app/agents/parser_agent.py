@@ -23,11 +23,12 @@ async def run_parser_agent(query: str, modality: str = "text") -> StructuredProb
     MODALITY: {modality}
     
     INSTRUCTIONS:
-    1. Fix any obvious OCR/ASR errors (e.g., '1' vs 'l', '0' vs 'O', 'sqrt' vs 'squirt').
-    2. Extract the core math topic (e.g., Algebra, Calculus).
-    3. Identify variables and constraints.
-    4. CRITICAL: If MODALITY is "image", set "needs_clarification" to true to allow user verification.
-    5. If the input is too ambiguous or nonsensical, set "needs_clarification" to true.
+    1. Fix only obvious typos. DO NOT simplify or alter mathematical structure.
+    2. PRESERVE terms like 'sqrt', 'log', 'ln', 'sin', 'cos'. If user types 'root', convert to 'sqrt'.
+    3. PRESERVE exponents (e.g., '^2') and fractions.
+    4. Extract the core math topic (e.g., Algebra, Calculus).
+    5. CRITICAL: If MODALITY is "image", set "needs_clarification" to true.
+    6. If input is ambiguous, set "needs_clarification" to true.
     
     OUTPUT JSON SCHEMA:
     {{
