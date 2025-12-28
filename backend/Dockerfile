@@ -9,10 +9,11 @@ RUN pip install poetry
 COPY pyproject.toml poetry.lock ./
 
 # Install project dependencies
-RUN poetry install --no-interaction --no-ansi
+RUN poetry lock
+RUN poetry install --no-interaction --no-ansi --no-root
 
 COPY . .
 
 EXPOSE 7860
 
-CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
