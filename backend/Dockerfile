@@ -11,6 +11,7 @@ COPY pyproject.toml poetry.lock ./
 # Install project dependencies
 RUN poetry lock
 RUN poetry install --no-interaction --no-ansi --no-root
+RUN poetry run pip install sqlmodel psycopg2-binary
 
 COPY . .
 
