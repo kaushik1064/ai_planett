@@ -45,11 +45,17 @@ def get_session_messages(session_id: UUID, session: Session = Depends(get_sessio
         for msg in results
     ]
 
+from pydantic import BaseModel
+
+class MessageCreate(BaseModel):
+    role: str
+    content: str
+
 @router.post("/sessions/{session_id}/messages")
-def add_message(session_id: UUID, role: str, content: str, session: Session = Depends(get_session)):
+def add_message(session_id: UUID, message: MessageCreate, session: Session = Depends(get_session)):
     """Add a message to a session."""
     try:
-        new_msg = ChatMessage(session_id=session_id, role=role, content=content)
+        new_msg = ChatMessage(session_id=session_id, role=message.role, content=message.content)
         session.add(new_msg)
         session.commit()
         return {"status": "ok", "id": str(new_msg.id)}

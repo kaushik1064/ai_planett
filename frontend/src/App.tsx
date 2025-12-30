@@ -68,7 +68,14 @@ export default function App() {
     if (!sessionId) return;
 
     // 1. Save User Message to DB
-    const userMsgReq = await fetch(`${API_BASE}/history/sessions/${sessionId}/messages?role=user&content=${encodeURIComponent(payload.text || "Shared an image/audio")}`, { method: "POST" });
+    const userMsgReq = await fetch(`${API_BASE}/history/sessions/${sessionId}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        role: "user",
+        content: payload.text || "Shared an image/audio"
+      })
+    });
 
     try {
       const response = await fetch(`${API_BASE}/api/chat`, {
@@ -90,7 +97,14 @@ export default function App() {
       const data: AgentResponsePayload = await response.json();
 
       // 2. Save AI Response to DB
-      await fetch(`${API_BASE}/history/sessions/${sessionId}/messages?role=assistant&content=${encodeURIComponent(data.answer)}`, { method: "POST" });
+      await fetch(`${API_BASE}/history/sessions/${sessionId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: "assistant",
+          content: data.answer
+        })
+      });
 
       setMessages((prev) => {
         const withoutStatus = prev.filter((msg) => msg.id !== trace.kbStatusId && msg.id !== trace.webStatusId);
